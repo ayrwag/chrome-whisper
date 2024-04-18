@@ -20,6 +20,7 @@ Please note that utilizing the whisper-tiny model would require using CPU minute
 
 1. Visit my [python-whisper repository](https://github.com/ayrwag/python-whisper).
 2. Follow the instructions provided in the repository to download the model locally and set up a localhost server (just a few commands).
-If available, the extension should automatically use `localhost:8080` as the fallback for my endpoint and transcribe files using the locally hosted model!
+
+*If available, the extension will automatically use `localhost:8080` as the fallback for my endpoint and transcribe files using the locally hosted model!*
 
 For any questions or issues, feel free to reach out to the repository's maintainer. Enjoy transcribing audio effortlessly with Chrome-Whisper Transcriber!
