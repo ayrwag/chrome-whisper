@@ -11,7 +11,7 @@ node_modules
 #dist
 src
 public
-index.html
+./index.html
 .eslintrc.cjs
 package*
 postcss*
