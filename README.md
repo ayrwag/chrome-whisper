@@ -6,19 +6,19 @@ This Chrome extension built in Vite + React TS + Tailwindcss utilizes OpenAI's w
 ## Installation
 To start using the extension, follow these steps:
 
-1. Download the `dist.crx` file or the `dist` directory from this repository.
+1. Download the `dist` directory from this repository.
 2. Open Google Chrome.
 3. Navigate to `chrome://extensions/`.
 4. Enable Developer mode in the top right corner.
-5. Drag and drop the `dist.crx` file into the extensions page or click on "Load unpacked" and select the `dist` directory.
+5. click on "Load unpacked" and select the `dist` directory. (make sure it is unzipped)
 
 ## Usage
-Once installed, the extension icon will appear in your Chrome toolbar. Simply click on the icon to activate the transcription feature. You can then input audio from your browser tabs, files, or streams, and the extension will transcribe it into text.
+Once installed, the extension icon will appear in your Chrome toolbar. Simply click on the icon to activate the transcription feature. You can then input audio from your browser tabs, files, or streams, and the extension will transcribe it into text. (I've provided `demo audio.mp3` as an example)
 
 ## Running Locally
-Please note that utilizing the whisper-tiny model requires CPU minutes on the cloud. To optimize performance and reduce reliance on cloud resources, you can follow these steps to download the model locally and host it on `localhost:8080`:
+Please note that utilizing the whisper-tiny model would require using CPU minutes on the cloud. I can't guarantee that my endpoint will remain open. You can follow these steps to download the model locally and host it on `localhost:8080`:
 
 1. Visit the [python-whisper repository](https://github.com/ayrwag/python-whisper).
 2. Follow the instructions provided in the repository to download the model locally and set up a localhost server.
 
-For any questions or issues, feel free to reach out to the repository's maintainer. Enjoy transcribing audio effortlessly with Whisper Transcriber!
+For any questions or issues, feel free to reach out to the repository's maintainer. Enjoy transcribing audio effortlessly with Chrome-Whisper Transcriber!
