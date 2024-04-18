@@ -13,7 +13,7 @@ To start using the extension, follow these steps:
 5. click on "Load unpacked" and select the `dist` directory. (make sure it is unzipped)
 
 ## Usage
-Once installed, the extension icon will appear in your Chrome toolbar. Simply click on the icon to activate the transcription feature. You can then input audio from your browser tabs, files, or streams, and the extension will transcribe it into text. (I've provided `demo audio.mp3` as an example)
+Once installed, the extension icon will appear in your Chrome toolbar. Simply click on the icon to activate the transcription feature. You can then input audio from your browser tabs, files, or streams, and the extension will transcribe it into text. (I've provided `demo audio.mp3` to use as an example)
 
 ## Running Locally
 Please note that utilizing the whisper-tiny model would require using CPU minutes on the cloud. I can't guarantee that my endpoint will remain open. You can follow these steps to download the model locally and host it on `localhost:8080`:
