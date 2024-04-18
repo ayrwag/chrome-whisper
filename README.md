@@ -19,6 +19,7 @@ Once installed, the extension icon will appear in your Chrome toolbar. Simply cl
 Please note that utilizing the whisper-tiny model would require using CPU minutes on the cloud. I can't guarantee that my endpoint will remain open. You can follow these steps to download the model locally and host it on `localhost:8080`:
 
 1. Visit the [python-whisper repository](https://github.com/ayrwag/python-whisper).
-2. Follow the instructions provided in the repository to download the model locally and set up a localhost server.
+2. Follow the instructions provided in the repository to download the model locally and set up a localhost server (just a few commands).
+3. Your extension should automatically use `localhost:8080` as the fallback for my endpoint and transcribe files using the locally hosted model!
 
 For any questions or issues, feel free to reach out to the repository's maintainer. Enjoy transcribing audio effortlessly with Chrome-Whisper Transcriber!
