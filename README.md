@@ -1,7 +1,7 @@
 # Chrome Extension: Whisper Transcriber
 
 ## Description
-This Chrome extension built in Vite + React TS + Tailwindcss utilizes OpenAI's whisper-tiny model to transcribe audio into text directly within your browser. With this extension, you can easily convert spoken words from audio files or streams into text, making it convenient for various applications.
+This Chrome extension built with Vite + React TS + Tailwindcss utilizes OpenAI's whisper-tiny model to transcribe audio into text directly within your browser. With this extension, you can easily convert spoken words from audio files or streams into text, making it convenient for various applications.
 
 ## Installation
 To start using the extension, follow these steps:
