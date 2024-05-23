@@ -7,7 +7,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+#NODE MODULES
 node_modules
+
+#secrets
+private_key.pem
+.env
+
+#Public Repo
+
+#Private repo (vite-chrome-whisper)
 dist
 dist.crx
 demo audio.mp3
@@ -20,7 +29,6 @@ demo audio.mp3
 #tailwind.config.js
 #tsconfig.*json
 #vite.config.ts
-private_key.pem
 #VITE_README.md
 #dist-ssr
 #*.local

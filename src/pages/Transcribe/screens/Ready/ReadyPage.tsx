@@ -6,7 +6,7 @@ import Button from "../../../../global-components/Button";
 import HighlightSvg from "../../../../global-components/HighlightSvg";
 import GridSvg from "../../../../global-components/GridSvg";
 const ReadyPage = () => {
-    const {setState,setResult,setUploadProgress} = useContext(StateContext) 
+    const {setState,setResult,setFileName,setUploadProgress} = useContext(StateContext) 
     const [fileData, setFileData] = useState<string|ArrayBuffer|null>(null)
     const [preview,setPreview] = useState<string|ArrayBuffer|null>(null)
     const [fileLoadingProgress,setFileLoadingProgress] = useState<number|null>(null)
@@ -33,6 +33,7 @@ const ReadyPage = () => {
       };
 
       preview.readAsDataURL(acceptedFiles[0]);
+      setFileName(acceptedFiles[0].name)
 
       file.onprogress = function (event) {
         if (event.lengthComputable) {

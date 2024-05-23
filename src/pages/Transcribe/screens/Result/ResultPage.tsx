@@ -4,8 +4,10 @@ import { FiCopy } from "react-icons/fi";
 import { MdDownload } from "react-icons/md";
 import Button from "../../../../global-components/Button";
 
+
+
 const ResultPage = () => {
-    const {result,setShowTransition,setUploadProgress} = useContext(StateContext)
+    const {result,setShowTransition,filename,setUploadProgress} = useContext(StateContext)
     const [disableDownloadBtn,setDisableDownloadBtn] = useState(false)
     const [copied,setCopied] = useState(false)
 
@@ -22,13 +24,21 @@ const ResultPage = () => {
         const day = date.getDate().toString().padStart(2, '0');
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
-        const formattedDate = `${year}${month}${day}_${hours}${minutes}`;        
-        const filename = `transcription_result_${formattedDate}.txt`;
+        const formattedDate = `${year}${month}${day}_${hours}${minutes}`;
+        function removeExtensionFromFilename (filename:string|null|undefined) {
+          if (!filename) return `[chrome whisper] ${formattedDate} transcription`
+          const lastDotIndex = filename.lastIndexOf('.')
+          if (lastDotIndex === -1 || filename.slice(lastDotIndex).length>4){
+            return filename
+          }
+          return filename.slice(0,lastDotIndex)
+        }       
+        const filenameWithTxtExt = `${removeExtensionFromFilename(filename)} [chrome whisper].txt`;
 
         const element = document.createElement("a");
         const file = new Blob([result??''], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
-        element.download = filename;
+        element.download = filenameWithTxtExt;
         document.body.appendChild(element);
         element.click();
 
