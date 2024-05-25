@@ -10,7 +10,7 @@ const LoadingPage = () => {
   return (
     <div>
       <H1>
-        Please wait.
+        Please wait
       </H1>
       <ul>
         {uploadProgress && uploadProgress < 1 ? (
@@ -24,8 +24,10 @@ const LoadingPage = () => {
           </li>
         ) : (
           <li>
-            <p>CPU cold start.</p>
-            <p className="inline-block w-60">AI model is launching<DotDotDot/></p>
+            <p>CPU cold start 🥶</p>
+            <span className="flex gap-2">
+              <p className="inline-block w-60">AI model is launching<DotDotDot/></p><LoadingSpinner />
+            </span>
           </li>
         )}
       </ul>

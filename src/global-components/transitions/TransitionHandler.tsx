@@ -4,14 +4,22 @@ import Container from "../containers/Container";
 
 const TransitionHandler = ({children,page2}:{children:React.ReactNode,page2:React.ReactNode}) => {
     const retrigger = false
-    const {setState,showTransition,setShowTransition} = useContext(StateContext)
+    const {/* setState ,*/showTransition,/* setShowTransition */} = useContext(StateContext)
     useEffect(()=>{
         if(showTransition){
             setTimeout(()=>{
-              setState("ready")
+              //setState("ready")
+              chrome.runtime.sendMessage({
+                type:"setState",
+                state:"ready"
+              })
             },150)
             setTimeout(()=>{
-                setShowTransition(false)
+                //setShowTransition(false)
+                chrome.runtime.sendMessage({
+                  type:"setShowTransition",
+                  showTransition:false
+                })
 
             },1850)
         }

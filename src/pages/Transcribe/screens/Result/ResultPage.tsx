@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useRef, useEffect, useState } from "react";
 import { StateContext } from "../../state/StateProvider";
 import { FiCopy } from "react-icons/fi";
 import { MdDownload } from "react-icons/md";
@@ -7,7 +7,7 @@ import Button from "../../../../global-components/Button";
 
 
 const ResultPage = () => {
-    const {result,setShowTransition,filename,setUploadProgress} = useContext(StateContext)
+    const {result,/* setShowTransition ,*/filename,/* setUploadProgress */} = useContext(StateContext)
     const [disableDownloadBtn,setDisableDownloadBtn] = useState(false)
     const [copied,setCopied] = useState(false)
 
@@ -15,7 +15,19 @@ const ResultPage = () => {
     useEffect(()=>{
       if(copied)setTimeout(()=>setCopied(false),3000)
     },[runEffectAgain,copied])
-    setUploadProgress(null)
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      // When the component mounts, ensure no input is focused
+      if (containerRef.current) {
+        containerRef.current.focus();
+      }
+    }, []);
+    //setUploadProgress(null)
+    chrome.runtime.sendMessage({
+      type:"setUploadProgress",
+      uploadProgress:null
+    })
     const handleDownload = () => {
         setDisableDownloadBtn(true)
         const date = new Date();
@@ -59,21 +71,48 @@ const ResultPage = () => {
     };
 
     return (
-        <div className="flex flex-col items-center">
-          <h1 className="text-xl font-semibold mb-2">Transcription Result:</h1>
-          <p className="w-[80%] max-h-56 overflow-scroll mb-4 border-black border-[0.5px] py-4 px-4 rounded">{result}</p>
-          <div className="flex gap-4 w-[80%] mb-4 px-2 relative">
-            <button onClick={handleCopyToClipboard} className={`flex gap-2 items-center ${copied?"text-gray-500":"text-black"}`}>
-              <FiCopy className="w-[0.75rem] h-[0.75rem]" />
-              {!copied?<p>copy</p>:<p className="text-sm min-w-max">copied to clipboard</p>}
-            </button>
-            <button disabled={disableDownloadBtn} autoFocus onClick={handleDownload} className={`${copied?" opacity-0 ":"transition-all" }  flex gap-2 items-center mr-auto`}>
-              <MdDownload className="w-[0.75rem] h-[0.75rem]" />
-              <p className="">download .txt</p>
-            </button>
-          </div>
-          <Button onClick={()=>setShowTransition(true)}>I'm done</Button>
+      <div className="flex flex-col items-center">
+        <h1 className="text-xl font-semibold mb-2">Transcription Result:</h1>
+        <p className="w-[80%] max-h-56 overflow-scroll mb-4 border-black border-[0.5px] py-4 px-4 rounded">
+          {result}
+        </p>
+        <div className="flex gap-4 w-[80%] mb-4 px-2 relative">
+          <button
+            onClick={handleCopyToClipboard}
+            className={`flex gap-2 items-center ${
+              copied ? "text-gray-500" : "text-black"
+            }`}
+          >
+            <FiCopy className="w-[0.75rem] h-[0.75rem]" />
+            {!copied ? (
+              <p>copy</p>
+            ) : (
+              <p className="text-sm min-w-max">copied to clipboard</p>
+            )}
+          </button>
+          <button
+            disabled={disableDownloadBtn}
+            autoFocus
+            onClick={handleDownload}
+            className={`${
+              copied ? " opacity-0 " : "transition-all"
+            }  flex gap-2 items-center mr-auto`}
+          >
+            <MdDownload className="w-[0.75rem] h-[0.75rem]" />
+            <p className="">download .txt</p>
+          </button>
         </div>
+        <Button
+          onClick={() =>
+            chrome.runtime.sendMessage({
+              type: "setShowTransition",
+              showTransition:true
+            })
+          }
+        >
+          I'm done
+        </Button>
+      </div>
     );
 }
 

@@ -1,12 +1,9 @@
-import { useState, useCallback, useContext, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {useDropzone} from 'react-dropzone'
-import { StateContext } from "../../state/StateProvider";
-import axios from 'axios'
 import Button from "../../../../global-components/Button";
 import HighlightSvg from "../../../../global-components/HighlightSvg";
 import GridSvg from "../../../../global-components/GridSvg";
 const ReadyPage = () => {
-    const {setState,setResult,setFileName,setUploadProgress} = useContext(StateContext) 
     const [fileData, setFileData] = useState<string|ArrayBuffer|null>(null)
     const [preview,setPreview] = useState<string|ArrayBuffer|null>(null)
     const [fileLoadingProgress,setFileLoadingProgress] = useState<number|null>(null)
@@ -33,7 +30,11 @@ const ReadyPage = () => {
       };
 
       preview.readAsDataURL(acceptedFiles[0]);
-      setFileName(acceptedFiles[0].name)
+      //setFileName(acceptedFiles[0].name)
+      chrome.runtime.sendMessage({
+        type: 'setFileName',
+        filename: acceptedFiles[0].name
+    });
 
       file.onprogress = function (event) {
         if (event.lengthComputable) {
@@ -57,34 +58,53 @@ const ReadyPage = () => {
     const fileIsReady = preview && acceptedFiles.length > 0 ? true:false
   
     async function handleOnSubmit(e: React.SyntheticEvent) {
-        const url = "https://python-whisper-nt5h5ii6iq-uc.a.run.app/speech-to-text" //"http://localhost:8080/speech-to-text";
-        e.preventDefault();
-
-        const formData = new FormData();
-        if (typeof acceptedFiles[0] === "undefined") return;
-        if (fileData === null) return;
-
-        formData.append("file", acceptedFiles[0]);
-        axios.post(url, fileData, {
-            onUploadProgress: (progressEvent) => {
-                setUploadProgress(progressEvent?.total?progressEvent.loaded/progressEvent.total:null)
-            },
-        })
-        .then((res) => {
-        if (res.data.text) {
-          setResult(res.data.text);
-          setState("result");
-        } else {
-            throw new Error("No text returned")
+      e.preventDefault();
+      if (typeof acceptedFiles[0] === "undefined" || fileData === null || typeof fileData === "string") return;
+    
+      function arrayBufferToBase64(fileData:ArrayBuffer) {
+        let binary = '';
+        const bytes = new Uint8Array(fileData);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
         }
-        })
-        .catch((err:any)=>{
-            console.log(err)
-            setState("error")
-        });
-        setState("loading");
-
+        return window.btoa(binary);
     }
+    
+    const base64String = arrayBufferToBase64(fileData);
+
+    const result = await(async (file, chunkSize) => {
+      return new Promise((resolve) => {
+        let start = 0;
+        let end = chunkSize;
+        const fileLength = file.length;
+
+        function sendChunk() {
+          if (start < fileLength) {
+            const chunk = file.slice(start, end);
+            chrome.runtime.sendMessage({ type: "fileChunk", chunk: chunk });
+
+            start = end;
+            end = start + chunkSize;
+
+            setTimeout(sendChunk, 0); // Continue sending the next chunk
+          } else {
+            resolve({ type: "fileComplete" })
+          }
+        }
+
+        sendChunk();
+      });
+    })(base64String,1024*1024);
+    chrome.runtime.sendMessage(result)
+
+      // chrome.runtime.sendMessage({
+      //   type: "uploadFile",
+      //   transportData: transportData,
+      //   totalSize:acceptedFiles[0].size
+      // });
+    }
+  
   
     return (
       <form

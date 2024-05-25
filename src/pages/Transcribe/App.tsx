@@ -8,7 +8,7 @@ import Done from "./screens/Result/screens/Done";
 import Button from "../../global-components/Button";
 
 const App = () => {
-    const {state,setState} = useContext(StateContext)
+    const {state,errorMessage} = useContext(StateContext)
     return (
         <TransitionHandler page2={<Done/>}>
         {state === "ready"?
@@ -19,9 +19,9 @@ const App = () => {
         <ResultPage/>
         :
         <div>
-            <h1>404</h1>
-            <p>Not found.</p>
-            <Button className={"text-sm"} onClick={()=>{setState('ready')}}>Return Home</Button>
+            <h1>Error</h1>
+            <p>{errorMessage}</p>
+            <Button className={"text-sm"} onClick={()=>{chrome.runtime.sendMessage({type:"setState",state:'ready'});chrome.runtime.sendMessage({type:"errorMessage",errorMessage:null})}}>Return Home</Button>
         </div>}
         </TransitionHandler>
     );
