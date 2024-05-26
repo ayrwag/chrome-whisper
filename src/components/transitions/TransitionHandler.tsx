@@ -1,31 +1,35 @@
 import { useContext, useEffect } from "react";
-import { StateContext } from "../../pages/Transcribe/state/StateProvider";
+import { StateContext, extensionEnvironment } from "../../pages/Transcribe/state/StateProvider";
 import Container from "../containers/Container";
 
 const TransitionHandler = ({children,page2}:{children:React.ReactNode,page2:React.ReactNode}) => {
     const retrigger = false
-    const {/* setState ,*/showTransition,/* setShowTransition */} = useContext(StateContext)
+    const {setState ,showTransition,setShowTransition} = useContext(StateContext)
     useEffect(()=>{
         if(showTransition){
             setTimeout(()=>{
               //setState("ready")
+              if(extensionEnvironment!=="webpage")
               chrome.runtime.sendMessage({
                 type:"setState",
                 state:"ready"
               })
+              else setState("ready")
             },150)
             setTimeout(()=>{
                 //setShowTransition(false)
+                if(extensionEnvironment!=="webpage")
                 chrome.runtime.sendMessage({
                   type:"setShowTransition",
                   showTransition:false
                 })
+                else setShowTransition(false)
 
             },1850)
         }
     },[retrigger,showTransition])
     return (
-      <div className="h-full relative">
+      <div className="h-full w-full relative ">
         <Container>
           <div
             className={`transition-opacity absolute z-10 ${

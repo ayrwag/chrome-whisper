@@ -30,27 +30,27 @@ let fileData = []
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'setState') {
         chrome.storage.local.set({ state: request.state }, () => {
-            console.log('State updated:', request.state);
+            //console.log('State updated:', request.state);
         });
     } else if (request.type === 'setResult') {
         chrome.storage.local.set({ result: request.result }, () => {
-            console.log('Result updated:', request.result);
+            //console.log('Result updated:', request.result);
         });
     } else if (request.type === 'setFileName') {
         chrome.storage.local.set({ filename: request.filename }, () => {
-            console.log('Filename updated:', request.filename);
+            //console.log('Filename updated:', request.filename);
         });
     } else if (request.type === 'setUploadProgress') {
         chrome.storage.local.set({ uploadProgress: request.uploadProgress }, () => {
-            console.log('Upload Progress updated:', request.uploadProgress);
+            //console.log('Upload Progress updated:', request.uploadProgress);
         });
     } else if (request.type === 'setShowTransition') {
         chrome.storage.local.set({ showTransition: request.showTransition }, () => {
-            console.log('Show Transition updated:', request.showTransition);
+            //console.log('Show Transition updated:', request.showTransition);
         });
     } else if (request.type === "setErrorMessage") {
         chrome.storage.local.set({ errorMessage: request.errorMessage }, () => {
-            console.log('Error message set:', request.errorMessage);
+            //console.log('Error message set:', request.errorMessage);
         });
     }
     
@@ -61,13 +61,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else if (request.type === "fileComplete") {
             const completeFile = fileData.join('');
             // Handle the complete file
-            console.log("Received complete file:", completeFile);
+            //console.log("Received complete file:", completeFile);
             const arrayBuffer = base64ToArrayBuffer(completeFile);
             const url = "https://python-whisper-nt5h5ii6iq-uc.a.run.app/speech-to-text";
             axios.post(url, arrayBuffer, {
                 onUploadProgress: (progressEvent) => {
-                    console.log("PROGRESS IS MADE "+progressEvent)
-                    console.log(progressEvent)
+                    //console.log("PROGRESS IS MADE "+progressEvent)
+                    //console.log(progressEvent)
                     const progress = arrayBuffer.byteLength ? progressEvent.loaded / arrayBuffer.byteLength : null;
                     chrome.storage.local.set({ uploadProgress: progress });            
                 },
@@ -81,9 +81,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
             })
             .catch((error)=>{
-                console.error(error);
+                //console.error(error);
                 chrome.storage.local.set({ state: "error" });
+                if(error?.response)
                 chrome.storage.local.set({errorMessage:`${error.response.status}: ${error.response.data}`})
+                else
+                chrome.storage.local.set({errorMessage:`${error.message}`})
             });
             chrome.storage.local.set({ state: "loading" });
             fileData = []; // Clear the buffer
@@ -95,6 +98,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Example of how to retrieve state
-chrome.storage.local.get(['state', 'result', 'filename', 'uploadProgress', 'showTransition'], (items) => {
-    console.log('Current state:', items);
-});
+// chrome.storage.local.get(['state', 'result', 'filename', 'uploadProgress', 'showTransition'], (items) => {
+//     console.log('Current state:', items);
+// });

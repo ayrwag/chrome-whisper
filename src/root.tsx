@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './pages/Transcribe/index.tsx'
-import './global-components/_index.css'
+import './components/_index.css'
 import "./build.css"
 import * as serviceWorkerRegistration from "./scripts/serviceWorkerRegistration.ts"
 

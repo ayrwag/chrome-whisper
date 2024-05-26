@@ -1,20 +1,34 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useContext } from "react";
 import {useDropzone} from 'react-dropzone'
-import Button from "../../../../global-components/Button";
-import HighlightSvg from "../../../../global-components/HighlightSvg";
-import GridSvg from "../../../../global-components/GridSvg";
+import Button from "../../../../components/Button";
+import HighlightSvg from "../../../../components/HighlightSvg";
+import GridSvg from "../../../../components/GridSvg";
+import { StateContext, extensionEnvironment } from "../../state/StateProvider";
+import axios from "axios";
+import ModalOverlay from "../../../../components/ModalOverlay";
+import LoadingSpinner from "../../../../components/LoadingSpinner";
 const ReadyPage = () => {
     const [fileData, setFileData] = useState<string|ArrayBuffer|null>(null)
     const [preview,setPreview] = useState<string|ArrayBuffer|null>(null)
     const [fileLoadingProgress,setFileLoadingProgress] = useState<number|null>(null)
     const [hovered, setHovered] = useState(false);
     const [alert,setAlert] = useState('')
+    const [transcriptionStarted,setTranscriptionStarted] = useState(false)
+    const {setFileName,setUploadProgress,setState,setResult,setErrorMessage,setFadeOut,fadeOut} = useContext(StateContext)
 
     const runEffectAgain = false
 
     useEffect(()=>{
       if(alert) setTimeout(()=>setAlert(''),3000)
     },[runEffectAgain,alert])
+
+    useEffect(() => {
+      //console.log('Transcription started state:', transcriptionStarted);
+      if (transcriptionStarted) {
+        // Optionally force a re-render or handle other logic
+        // This is just for debugging; typically you shouldn't need to force a re-render
+      }
+    }, [transcriptionStarted]);
 
   
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -31,10 +45,12 @@ const ReadyPage = () => {
 
       preview.readAsDataURL(acceptedFiles[0]);
       //setFileName(acceptedFiles[0].name)
-      chrome.runtime.sendMessage({
-        type: 'setFileName',
-        filename: acceptedFiles[0].name
-    });
+      if(extensionEnvironment!=="webpage"){
+        chrome.runtime.sendMessage({
+          type: "setFileName",
+          filename: acceptedFiles[0].name,
+        });
+      } else setFileName(acceptedFiles[0].name)
 
       file.onprogress = function (event) {
         if (event.lengthComputable) {
@@ -59,44 +75,87 @@ const ReadyPage = () => {
   
     async function handleOnSubmit(e: React.SyntheticEvent) {
       e.preventDefault();
-      if (typeof acceptedFiles[0] === "undefined" || fileData === null || typeof fileData === "string") return;
+      if (
+        typeof acceptedFiles[0] === "undefined" ||
+        fileData === null ||
+        typeof fileData === "string"
+      )
+        return;
+        const worker = new Worker("worker.js");
+        worker.postMessage(fileData);
+
+        worker.onmessage = async function (e) {
+          const base64String = e.data;
+          // Use the base64 string for further processing or state updates
+          if (extensionEnvironment !== "webpage") {
+            const result = await (async (file, chunkSize) => {
+              return new Promise((resolve) => {
+                let start = 0;
+                let end = chunkSize;
+                const fileLength = file.length;
     
-      function arrayBufferToBase64(fileData:ArrayBuffer) {
-        let binary = '';
-        const bytes = new Uint8Array(fileData);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
-    }
+                function sendChunk() {
+                  if (start < fileLength) {
+                    const chunk = file.slice(start, end);
+                    chrome.runtime.sendMessage({ type: "fileChunk", chunk: chunk });
     
-    const base64String = arrayBufferToBase64(fileData);
-
-    const result = await(async (file, chunkSize) => {
-      return new Promise((resolve) => {
-        let start = 0;
-        let end = chunkSize;
-        const fileLength = file.length;
-
-        function sendChunk() {
-          if (start < fileLength) {
-            const chunk = file.slice(start, end);
-            chrome.runtime.sendMessage({ type: "fileChunk", chunk: chunk });
-
-            start = end;
-            end = start + chunkSize;
-
-            setTimeout(sendChunk, 0); // Continue sending the next chunk
+                    start = end;
+                    end = start + chunkSize;
+    
+                    setTimeout(sendChunk, 0); // Continue sending the next chunk
+                  } else {
+                    resolve({ type: "fileComplete" });
+                  }
+                }
+    
+                sendChunk();
+              });
+            })(base64String, 1024 * 1024);
+            chrome.runtime.sendMessage(result);
           } else {
-            resolve({ type: "fileComplete" })
+            const url =
+              "https://python-whisper-nt5h5ii6iq-uc.a.run.app/speech-to-text";
+            axios
+              .post(url, fileData, {
+                onUploadProgress: (progressEvent) => {
+                  const progress = progressEvent.total
+                    ? progressEvent.loaded / progressEvent.total
+                    : null;
+                  setUploadProgress(progress);
+                },
+              })
+              .then((res) => {
+                if (res.data.text) {
+                  setResult(res.data.text);
+                  setState("result");
+                } else {
+                  throw new Error("No text returned");
+                }
+              })
+              .catch((error: any) => {
+                //console.error(error);
+                setState("error");
+                if (error?.response)
+                  setErrorMessage(
+                    `${error.response.status}: ${error.response.data}`
+                  );
+                else setErrorMessage(`${error.message}`);
+              });
+            setTranscriptionStarted(false);
+            setFadeOut(true)
+            setTimeout(()=>{
+              setState("loading")
+              setTimeout(()=>{
+                setFadeOut(false)
+              },100)
+            },600)
           }
-        }
+        };
 
-        sendChunk();
-      });
-    })(base64String,1024*1024);
-    chrome.runtime.sendMessage(result)
+        worker.onerror = function (error) {
+          console.error("Worker error:", error);
+        };
+      
 
       // chrome.runtime.sendMessage({
       //   type: "uploadFile",
@@ -109,8 +168,20 @@ const ReadyPage = () => {
     return (
       <form
         onSubmit={handleOnSubmit}
-        className={`flex flex-col items-center h-full justify-center relative`}
+        className={`flex flex-col items-center h-full w-full justify-center relative transition-opacity duration-[600s] ${fadeOut?"opacity-0":"opacity-100"}`}
       >
+        {transcriptionStarted ?
+          <ModalOverlay>
+            <div className="absolute h-full w-full bg-black opacity-50 z-10" />
+            <div className="z-20 absolute">
+              <div className="bg-white rounded p-12 flex flex-col items-center">
+                <span>Large file. Please wait</span>
+                <LoadingSpinner />
+              </div>
+            </div>
+          </ModalOverlay>
+          :null
+        }
         <h1 className="text-xl font-semibold">Transcribe Audio Files</h1>
         {fileLoadingProgress !== null ? (
           <div className="h-48 my-12 flex flex-col justify-center">
@@ -158,9 +229,7 @@ const ReadyPage = () => {
                     {preview && acceptedFiles.length > 0 ? (
                       `"` + acceptedFiles[0].name + `"`
                     ) : (
-                      <p>
-                        Drag 'n' drop an audio file, or click here
-                      </p>
+                      <p>Drag 'n' drop an audio file, or click here</p>
                     )}
                   </button>
                 )}
@@ -178,13 +247,41 @@ const ReadyPage = () => {
           </>
         )}
         <div className="relative w-full flex flex-col items-center">
-        <Button className={"max-w-max"} enabled={fileIsReady} onClick={()=>{if(!fileIsReady){setAlert('select an audio file first')}}}>Transcribe</Button>
-        {alert?<div className="bg-gray-500 top-[110%] text-white text-sm rounded absolute p-2">{alert}</div>:""}
+          <Button
+            className={"max-w-max"}
+            enabled={fileIsReady}
+            type={"submit"}
+            onClick={() => {
+              if (!fileIsReady) {
+                setAlert("select an audio file first");
+              } else {
+                setTimeout(()=>{
+                  setTranscriptionStarted(true);
+                },1000)
+
+              }
+            }}
+          >
+            Transcribe
+          </Button>
+          {alert ? (
+            <div className="bg-gray-500 top-[110%] text-white text-sm rounded absolute p-2">
+              {alert}
+            </div>
+          ) : (
+            ""
+          )}
         </div>
-        <HighlightSvg/>
-        <img className="absolute -z-20 opacity-50" src="left-gradient@1x.webp"/>
-        <img className="absolute -z-20 opacity-40 animate-pulse-slow" src="right-gradient@1x.webp"/>
-        <GridSvg/>
+        <HighlightSvg />
+        <img
+          className="absolute -z-20 opacity-50"
+          src="left-gradient@1x.webp"
+        />
+        <img
+          className="absolute -z-20 opacity-40 animate-pulse-slow"
+          src="right-gradient@1x.webp"
+        />
+        <GridSvg />
       </form>
     );
 }

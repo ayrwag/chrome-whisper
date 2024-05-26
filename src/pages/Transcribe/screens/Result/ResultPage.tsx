@@ -1,13 +1,13 @@
 import { useContext, useRef, useEffect, useState } from "react";
-import { StateContext } from "../../state/StateProvider";
+import { StateContext, extensionEnvironment } from "../../state/StateProvider";
 import { FiCopy } from "react-icons/fi";
 import { MdDownload } from "react-icons/md";
-import Button from "../../../../global-components/Button";
+import Button from "../../../../components/Button";
 
 
 
 const ResultPage = () => {
-    const {result,/* setShowTransition ,*/filename,/* setUploadProgress */} = useContext(StateContext)
+    const {result,setShowTransition ,filename,setUploadProgress} = useContext(StateContext)
     const [disableDownloadBtn,setDisableDownloadBtn] = useState(false)
     const [copied,setCopied] = useState(false)
 
@@ -24,10 +24,12 @@ const ResultPage = () => {
       }
     }, []);
     //setUploadProgress(null)
+    if(extensionEnvironment!=="webpage")
     chrome.runtime.sendMessage({
       type:"setUploadProgress",
       uploadProgress:null
     })
+    else setUploadProgress(null)
     const handleDownload = () => {
         setDisableDownloadBtn(true)
         const date = new Date();
@@ -92,7 +94,7 @@ const ResultPage = () => {
           </button>
           <button
             disabled={disableDownloadBtn}
-            autoFocus
+            //autoFocus
             onClick={handleDownload}
             className={`${
               copied ? " opacity-0 " : "transition-all"
@@ -103,11 +105,14 @@ const ResultPage = () => {
           </button>
         </div>
         <Button
-          onClick={() =>
+          onClick={extensionEnvironment!=="webpage"?
+          () =>
             chrome.runtime.sendMessage({
               type: "setShowTransition",
               showTransition:true
             })
+            :
+          () => setShowTransition(true)
           }
         >
           I'm done

@@ -1,46 +1,56 @@
-import { createContext } from "react";
+import { createContext, useState } from "react";
 import useChromeStorage from "../../../scripts/customHooks/useChromeStorage";
+
+export const extensionEnvironment = undefined //"webpage"
 interface State {
     state:"ready"|"loading"|"result"|"error",
-    setState?:(state:"ready"|"loading"|"result"|"error")=>void,
+    setState:(state:"ready"|"loading"|"result"|"error")=>void,
     result?:string|null,
-    setResult?:(result:string|null|undefined)=>void,
+    setResult:(result:string|null|undefined)=>void,
     filename?:string|null,
-    setFileName?:(filename:string|null)=>void
+    setFileName:(filename:string|null)=>void
     uploadProgress?:number|null,
-    setUploadProgress?:(progress:number|null)=>void,
+    setUploadProgress:(progress:number|null)=>void,
     showTransition?:boolean|undefined,
-    setShowTransition?:(showTransition:boolean|undefined)=>void
+    setShowTransition:(showTransition:boolean|undefined)=>void
     errorMessage?:string|null
+    setErrorMessage:(errorMessage:string|null)=>void,
+    fadeOut?:boolean,
+    setFadeOut:(value:boolean)=>void
 }
-const initState:State = {state: "ready", setState: () => {},setResult: () => {},setFileName:()=>{},setUploadProgress:()=>{},setShowTransition:()=>{}}
+const initState:State = {state: "ready", setState: () => {},setResult: () => {},setFileName:()=>{},setUploadProgress:()=>{},setShowTransition:()=>{},setErrorMessage:()=>{},setFadeOut:()=>{}}
 export const StateContext = createContext<State>(initState)
 const StateProvider = ({children}:{children:React.ReactNode}) => {
     // const [state, setState] = useState<"ready"|"loading"|"result"|"error">("ready")
-    const state = useChromeStorage('state','ready')
+    const {value:state,setValue:setState} = useChromeStorage('state','ready')
     // const [result,setResult] = useState<string|null|undefined>(null)
-    const result = useChromeStorage('result',null)
+    const {value:result,setValue:setResult} = useChromeStorage('result',null)
     //const [filename,setFileName] = useState<string|null>(null)
-    const filename = useChromeStorage('filename',null)
+    const {value:filename,setValue:setFileName} = useChromeStorage('filename',null)
     // const [uploadProgress,setUploadProgress] = useState<number|null>(null)
-    const uploadProgress = useChromeStorage('uploadProgress',null)
+    const {value:uploadProgress,setValue:setUploadProgress} = useChromeStorage('uploadProgress',null)
     //const [showTransition,setShowTransition] = useState<boolean|undefined>(false)
-    const showTransition = useChromeStorage('showTransition',false)
+    const {value:showTransition,setValue:setShowTransition} = useChromeStorage('showTransition',false)
 
-    const errorMessage = useChromeStorage('errorMessage',null)
+    const {value:errorMessage,setValue:setErrorMessage} = useChromeStorage('errorMessage',null)
+
+    const [fadeOut,setFadeOut] = useState(false)
 
     const values = {
         state,
-        //setState,
+        setState,
         result,
-        //setResult,
+        setResult,
         filename,
-        //setFileName,
+        setFileName,
         uploadProgress,
-        //setUploadProgress,
+        setUploadProgress,
         showTransition,
-        //setShowTransition
-        errorMessage
+        setShowTransition,
+        errorMessage,
+        setErrorMessage,
+        fadeOut,
+        setFadeOut
     }
     return (
         <StateContext.Provider value={values}>
