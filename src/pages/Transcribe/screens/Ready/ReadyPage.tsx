@@ -22,14 +22,6 @@ const ReadyPage = () => {
       if(alert) setTimeout(()=>setAlert(''),3000)
     },[runEffectAgain,alert])
 
-    useEffect(() => {
-      //console.log('Transcription started state:', transcriptionStarted);
-      if (transcriptionStarted) {
-        // Optionally force a re-render or handle other logic
-        // This is just for debugging; typically you shouldn't need to force a re-render
-      }
-    }, [transcriptionStarted]);
-
   
     const onDrop = useCallback((acceptedFiles: File[]) => {
       setPreview(null);
@@ -115,32 +107,35 @@ const ReadyPage = () => {
           } else {
             const url =
               "https://python-whisper-nt5h5ii6iq-uc.a.run.app/speech-to-text";
-            axios
-              .post(url, fileData, {
-                onUploadProgress: (progressEvent) => {
-                  const progress = progressEvent.total
-                    ? progressEvent.loaded / progressEvent.total
-                    : null;
-                  setUploadProgress(progress);
-                },
-              })
-              .then((res) => {
-                if (res.data.text) {
-                  setResult(res.data.text);
-                  setState("result");
-                } else {
-                  throw new Error("No text returned");
-                }
-              })
-              .catch((error: any) => {
-                //console.error(error);
-                setState("error");
-                if (error?.response)
-                  setErrorMessage(
-                    `${error.response.status}: ${error.response.data}`
-                  );
-                else setErrorMessage(`${error.message}`);
-              });
+              axios
+                .post(url, fileData, {
+                  onUploadProgress: (progressEvent) => {
+
+                    const progress = progressEvent.total
+                      ? progressEvent.loaded / progressEvent.total
+                      : null;
+                      console.log(progress)
+                    setUploadProgress(progress);
+                  },
+                })
+                .then((res) => {
+                  if (res.data.text) {
+                    setResult(res.data.text);
+                    setState("result");
+                  } else {
+                    throw new Error("No text returned");
+                  }
+                })
+                .catch((error: any) => {
+                  //console.error(error);
+                  setState("error");
+                  if (error?.response)
+                    setErrorMessage(
+                      `${error.response.status}: ${error.response.data}`
+                    );
+                  else setErrorMessage(`${error.message}`);
+                });
+
             setTranscriptionStarted(false);
             setFadeOut(true)
             setTimeout(()=>{

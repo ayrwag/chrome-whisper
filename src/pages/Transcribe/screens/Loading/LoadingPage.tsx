@@ -1,12 +1,26 @@
 import { useContext } from "react";
-import { StateContext } from "../../state/StateProvider";
+import { StateContext, extensionEnvironment } from "../../state/StateProvider";
 import H1 from "../../../../components/H1";
 import { FaCheck } from "react-icons/fa";
 import LoadingSpinner from "../../../../components/LoadingSpinner";
 import { DotDotDot } from "../../../../components/DotDotDot";
+import Button from "../../../../components/Button";
 
 const LoadingPage = () => {
-  const { uploadProgress, fadeOut } = useContext(StateContext);
+  const { uploadProgress, fadeOut, showCancelTranscriptionBtn,setShowCancelTranscriptionBtn } = useContext(StateContext);
+
+  const handleCancelTranscription = () =>{
+    if (extensionEnvironment !== "webpage") {
+      chrome.runtime.sendMessage({
+        type: "showCancelTranscriptionBtn",
+        showCancelTranscriptionBtn: false,
+      });
+      chrome.runtime.sendMessage({type:"errorMessage",errorMessage:"Transcription was cancelled."})
+      chrome.runtime.sendMessage({type:"state",state:"error"})
+    } else {
+      setShowCancelTranscriptionBtn(false);
+    }
+  }
 
   return (
     <div className={` transition-opacity ${fadeOut?"opacity-0":"opacity-100"}`}>
@@ -36,6 +50,11 @@ const LoadingPage = () => {
       {uploadProgress === 1 && <div>
         <span className="flex gap-2"><span className="inline-block w-36">Transcribing file<DotDotDot/></span>         <LoadingSpinner /></span>
       </div>}
+      {showCancelTranscriptionBtn&&
+      (<Button onClick={handleCancelTranscription} className="mt-3">
+        Cancel
+      </Button>)
+      }
     </div>
   );
 }

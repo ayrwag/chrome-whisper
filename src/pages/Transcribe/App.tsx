@@ -19,9 +19,10 @@ const App = () => {
         ) : state === "result" ? (
           <ResultPage />
         ) : (
-          <div>
-            <h1 className=" font-semibold">Error</h1>
+          <div className="flex flex-col items-center">
+            <h1 className=" text-lg font-semibold">Error</h1>
             <p>{errorMessage}</p>
+            <p className="">Note: GCR does not support file sizes &gt; 32mb</p>
             <Button
               className={"text-sm"}
               onClick={extensionEnvironment!=="webpage"?() => {

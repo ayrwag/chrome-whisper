@@ -26,7 +26,7 @@ const ResultPage = () => {
     //setUploadProgress(null)
     if(extensionEnvironment!=="webpage")
     chrome.runtime.sendMessage({
-      type:"setUploadProgress",
+      type:"uploadProgress",
       uploadProgress:null
     })
     else setUploadProgress(null)

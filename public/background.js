@@ -1,7 +1,7 @@
 importScripts('libs/axios.min.js');
 
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('Extension installed');
+    //console.log('Extension installed');
     // Initialize default state
     chrome.storage.local.set({
         state: 'ready',
@@ -40,10 +40,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.storage.local.set({ filename: request.filename }, () => {
             //console.log('Filename updated:', request.filename);
         });
-    } else if (request.type === 'setUploadProgress') {
-        chrome.storage.local.set({ uploadProgress: request.uploadProgress }, () => {
-            //console.log('Upload Progress updated:', request.uploadProgress);
-        });
     } else if (request.type === 'setShowTransition') {
         chrome.storage.local.set({ showTransition: request.showTransition }, () => {
             //console.log('Show Transition updated:', request.showTransition);
@@ -69,8 +65,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     //console.log("PROGRESS IS MADE "+progressEvent)
                     //console.log(progressEvent)
                     const progress = arrayBuffer.byteLength ? progressEvent.loaded / arrayBuffer.byteLength : null;
-                    chrome.storage.local.set({ uploadProgress: progress });            
-                },
+                    console.log(progress)
+                    chrome.runtime.sendMessage({type:"uploadProgress",uploadProgress:Math.round(100 * progress)/100?progress:null})           
+                }
             })
             .then((res) => {
             if (res.data.text) {
@@ -90,6 +87,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             });
             chrome.storage.local.set({ state: "loading" });
             fileData = []; // Clear the buffer
+            setTimeout(()=>{
+                chrome.storage.local.get("state", (result) => {
+                    if (result==="loading") {
+                        chrome.runtime.sendMessage({type:"showCancelTranscriptionBtn",showCancelTranscriptionBtn:true})
+                    }
+                });
+            },60000)
+
         }
     }
 

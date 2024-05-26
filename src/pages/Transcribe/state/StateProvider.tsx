@@ -1,7 +1,8 @@
 import { createContext, useState } from "react";
 import useChromeStorage from "../../../scripts/customHooks/useChromeStorage";
+import useChromeOnMessage from "../../../scripts/customHooks/useChromeOnMessage";
 
-export const extensionEnvironment = undefined //"webpage"
+export const extensionEnvironment = "webpage"
 interface State {
     state:"ready"|"loading"|"result"|"error",
     setState:(state:"ready"|"loading"|"result"|"error")=>void,
@@ -16,9 +17,11 @@ interface State {
     errorMessage?:string|null
     setErrorMessage:(errorMessage:string|null)=>void,
     fadeOut?:boolean,
-    setFadeOut:(value:boolean)=>void
+    setFadeOut:(value:boolean)=>void,
+    showCancelTranscriptionBtn?:boolean,
+    setShowCancelTranscriptionBtn:(value:boolean)=>void
 }
-const initState:State = {state: "ready", setState: () => {},setResult: () => {},setFileName:()=>{},setUploadProgress:()=>{},setShowTransition:()=>{},setErrorMessage:()=>{},setFadeOut:()=>{}}
+const initState:State = {state: "ready", setState: () => {},setResult: () => {},setFileName:()=>{},setUploadProgress:()=>{},setShowTransition:()=>{},setErrorMessage:()=>{},setFadeOut:()=>{},setShowCancelTranscriptionBtn:()=>{}}
 export const StateContext = createContext<State>(initState)
 const StateProvider = ({children}:{children:React.ReactNode}) => {
     // const [state, setState] = useState<"ready"|"loading"|"result"|"error">("ready")
@@ -28,11 +31,13 @@ const StateProvider = ({children}:{children:React.ReactNode}) => {
     //const [filename,setFileName] = useState<string|null>(null)
     const {value:filename,setValue:setFileName} = useChromeStorage('filename',null)
     // const [uploadProgress,setUploadProgress] = useState<number|null>(null)
-    const {value:uploadProgress,setValue:setUploadProgress} = useChromeStorage('uploadProgress',null)
+    const {value:uploadProgress,setValue:setUploadProgress} = useChromeOnMessage('uploadProgress',null)
     //const [showTransition,setShowTransition] = useState<boolean|undefined>(false)
     const {value:showTransition,setValue:setShowTransition} = useChromeStorage('showTransition',false)
 
     const {value:errorMessage,setValue:setErrorMessage} = useChromeStorage('errorMessage',null)
+
+    const {value:showCancelTranscriptionBtn,setValue:setShowCancelTranscriptionBtn} = useChromeStorage("showCancelTranscriptionBtn",false)
 
     const [fadeOut,setFadeOut] = useState(false)
 
@@ -50,7 +55,9 @@ const StateProvider = ({children}:{children:React.ReactNode}) => {
         errorMessage,
         setErrorMessage,
         fadeOut,
-        setFadeOut
+        setFadeOut,
+        showCancelTranscriptionBtn,
+        setShowCancelTranscriptionBtn
     }
     return (
         <StateContext.Provider value={values}>
