@@ -2,7 +2,7 @@ import { createContext, useState } from "react";
 import useChromeStorage from "../../../scripts/customHooks/useChromeStorage";
 import useChromeOnMessage from "../../../scripts/customHooks/useChromeOnMessage";
 
-export const extensionEnvironment = "webpage"
+export const extensionEnvironment = undefined //"webpage"
 interface State {
     state:"ready"|"loading"|"result"|"error",
     setState:(state:"ready"|"loading"|"result"|"error")=>void,
@@ -19,9 +19,11 @@ interface State {
     fadeOut?:boolean,
     setFadeOut:(value:boolean)=>void,
     showCancelTranscriptionBtn?:boolean,
-    setShowCancelTranscriptionBtn:(value:boolean)=>void
+    setShowCancelTranscriptionBtn:(value:boolean)=>void,
+    allowUploadsFromURL?:boolean,
+    setAllowUploadsFromURL:(value:boolean)=>void
 }
-const initState:State = {state: "ready", setState: () => {},setResult: () => {},setFileName:()=>{},setUploadProgress:()=>{},setShowTransition:()=>{},setErrorMessage:()=>{},setFadeOut:()=>{},setShowCancelTranscriptionBtn:()=>{}}
+const initState:State = {state: "ready", setState: () => {},setResult: () => {},setFileName:()=>{},setUploadProgress:()=>{},setShowTransition:()=>{},setErrorMessage:()=>{},setFadeOut:()=>{},setShowCancelTranscriptionBtn:()=>{},setAllowUploadsFromURL:()=>{}}
 export const StateContext = createContext<State>(initState)
 const StateProvider = ({children}:{children:React.ReactNode}) => {
     // const [state, setState] = useState<"ready"|"loading"|"result"|"error">("ready")
@@ -41,6 +43,8 @@ const StateProvider = ({children}:{children:React.ReactNode}) => {
 
     const [fadeOut,setFadeOut] = useState(false)
 
+    const {value:allowUploadsFromURL,setValue:setAllowUploadsFromURL} = useChromeStorage('allowUploadsFromURL',false)
+
     const values = {
         state,
         setState,
@@ -57,7 +61,9 @@ const StateProvider = ({children}:{children:React.ReactNode}) => {
         fadeOut,
         setFadeOut,
         showCancelTranscriptionBtn,
-        setShowCancelTranscriptionBtn
+        setShowCancelTranscriptionBtn,
+        allowUploadsFromURL,
+        setAllowUploadsFromURL
     }
     return (
         <StateContext.Provider value={values}>

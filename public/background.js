@@ -9,7 +9,8 @@ chrome.runtime.onInstalled.addListener(() => {
         filename: null,
         uploadProgress: null,
         showTransition: false,
-        errorMessage:null
+        errorMessage:null,
+        allowUploadsFromURL:false
     });
 });
 
@@ -48,16 +49,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.storage.local.set({ errorMessage: request.errorMessage }, () => {
             //console.log('Error message set:', request.errorMessage);
         });
-    }
-    
-    else if (request.type === 'fileComplete' | request.type === "fileChunk") {
+    } else if (request.type === "allowUploadsFromURL") {
+        chrome.storage.local.set({ allowUploadsFromURL: request.allowUploadsFromURL }, () => {
+            //console.log('Allow uploads from URL updated:', request.allowUploadsFromURL);
+        });
+    } else if (request.type === 'fileComplete' | request.type === "fileChunk") {
 
         if (request.type === "fileChunk") {
             fileData.push(request.chunk);
         } else if (request.type === "fileComplete") {
             const completeFile = fileData.join('');
             // Handle the complete file
-            //console.log("Received complete file:", completeFile);
+            console.log("Background.js Received complete file:", completeFile);
             const arrayBuffer = base64ToArrayBuffer(completeFile);
             const url = "https://python-whisper-nt5h5ii6iq-uc.a.run.app/speech-to-text";
             axios.post(url, arrayBuffer, {
@@ -73,6 +76,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (res.data.text) {
                 chrome.storage.local.set({ result: res.data.text });
                 chrome.storage.local.set({ state: "result" });
+                chrome.runtime.sendMessage({type:"uploadProgress",uploadProgress:1})//hard-setting uploadProgress to 1
             } else {
                 throw new Error("No text returned")
             }
@@ -106,3 +110,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // chrome.storage.local.get(['state', 'result', 'filename', 'uploadProgress', 'showTransition'], (items) => {
 //     console.log('Current state:', items);
 // });
+
+chrome.action.onClicked.addListener((tab)=>{
+    console.log("Injected script to Tab", tab.id)
+    chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        files: ['content.js']
+      });
+})

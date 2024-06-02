@@ -8,10 +8,17 @@
         "32": "icon-32x32.png",
         "144": "icon-144x144.png"
       },
-    "permissions": ["storage","notifications","background"],
+    "permissions": ["activeTab","storage","notifications","background"],
     "background":{
       "service_worker":"background.js"
     },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "run_at": "document_end"
+      }
+    ],
     "action": {
         "default_icon": {
             "16": "icon-16x16.png",

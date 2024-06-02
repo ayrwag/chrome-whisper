@@ -7,6 +7,7 @@ import { StateContext, extensionEnvironment } from "../../state/StateProvider";
 import axios from "axios";
 import ModalOverlay from "../../../../components/ModalOverlay";
 import LoadingSpinner from "../../../../components/LoadingSpinner";
+import uploadFileToBackgroundScript from "../../../../scripts/uploadFileToBackgroud";
 const ReadyPage = () => {
     const [fileData, setFileData] = useState<string|ArrayBuffer|null>(null)
     const [preview,setPreview] = useState<string|ArrayBuffer|null>(null)
@@ -14,7 +15,31 @@ const ReadyPage = () => {
     const [hovered, setHovered] = useState(false);
     const [alert,setAlert] = useState('')
     const [transcriptionStarted,setTranscriptionStarted] = useState(false)
-    const {setFileName,setUploadProgress,setState,setResult,setErrorMessage,setFadeOut,fadeOut} = useContext(StateContext)
+    const {setFileName,setUploadProgress,setState,setResult,setErrorMessage,setFadeOut,fadeOut,allowUploadsFromURL} = useContext(StateContext)
+
+    useEffect(()=>{
+      queryTheActiveTab()
+    },[])
+
+    if(extensionEnvironment!=="webpage"){
+    useEffect(() => {
+      const messageListener = (request:any) => {
+
+        if (request.action === "transcriptionStarted") {
+          console.log("transcriptionStarted")
+          setTranscriptionStarted(true);
+        }
+      };
+
+        chrome.runtime.onMessage.addListener(messageListener);
+
+    
+      // Cleanup function
+      return () => {
+        chrome.runtime.onMessage.removeListener(messageListener);
+      };
+    }, []);
+  }
 
     const runEffectAgain = false
 
@@ -80,29 +105,7 @@ const ReadyPage = () => {
           const base64String = e.data;
           // Use the base64 string for further processing or state updates
           if (extensionEnvironment !== "webpage") {
-            const result = await (async (file, chunkSize) => {
-              return new Promise((resolve) => {
-                let start = 0;
-                let end = chunkSize;
-                const fileLength = file.length;
-    
-                function sendChunk() {
-                  if (start < fileLength) {
-                    const chunk = file.slice(start, end);
-                    chrome.runtime.sendMessage({ type: "fileChunk", chunk: chunk });
-    
-                    start = end;
-                    end = start + chunkSize;
-    
-                    setTimeout(sendChunk, 0); // Continue sending the next chunk
-                  } else {
-                    resolve({ type: "fileComplete" });
-                  }
-                }
-    
-                sendChunk();
-              });
-            })(base64String, 1024 * 1024);
+            const result = await uploadFileToBackgroundScript(base64String, 1024 * 1024)
             chrome.runtime.sendMessage(result);
           } else {
             const url =
@@ -193,7 +196,7 @@ const ReadyPage = () => {
           <>
             <div
               className={`${
-                preview && acceptedFiles.length > 0 ? "h-48 my-12" : ""
+                preview && acceptedFiles.length > 0 ? "h-48 mt-12" : ""
               }`}
             >
               <div
@@ -230,7 +233,7 @@ const ReadyPage = () => {
                 )}
               </div>
               {preview && (
-                <audio controls className="mb-4">
+                <audio controls className="mt-12 mb-4">
                   <source
                     src={preview ? preview.toString() : undefined}
                     type="audio/mpeg"
@@ -241,6 +244,14 @@ const ReadyPage = () => {
             </div>
           </>
         )}
+        {allowUploadsFromURL ?<button className="mb-6 text-sm underline text-[#147f14]" onClick={async () => {
+            try {
+              const {tabId} = await chrome.storage.local.get("tabId")
+              chrome.tabs.sendMessage(tabId,"fetchAndUploadAudioFile")
+            } catch (error) {
+                console.error('Error fetching or uploading file:', error);
+            }
+        }}>Use audio file from this page</button>:null}
         <div className="relative w-full flex flex-col items-center">
           <Button
             className={"max-w-max"}
@@ -282,3 +293,22 @@ const ReadyPage = () => {
 }
 
 export default ReadyPage;
+
+async function queryTheActiveTab() {
+  if(extensionEnvironment==="webpage")return
+  chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+    if (tabs[0]) {
+      console.log("Tab id",tabs[0].id!)
+      try {
+        const response = await chrome.tabs.sendMessage(tabs[0].id!,"queryTheActiveTab")
+        console.log(response)
+        if(response?.status!=="pass") return
+        chrome.storage.local.set({tabId:tabs[0].id})
+        chrome.runtime.sendMessage({type:"allowUploadsFromURL",allowUploadsFromURL:true})
+      } catch (error) {
+        console.error(error)
+        chrome.runtime.sendMessage({type:"allowUploadsFromURL",allowUploadsFromURL:false})
+      }
+    }
+  });
+}
