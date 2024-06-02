@@ -2,7 +2,7 @@ import { createContext, useState } from "react";
 import useChromeStorage from "../../../scripts/customHooks/useChromeStorage";
 import useChromeOnMessage from "../../../scripts/customHooks/useChromeOnMessage";
 
-export const extensionEnvironment = "webpage"
+export const extensionEnvironment = undefined//"webpage"
 interface State {
     state:"ready"|"loading"|"result"|"error",
     setState:(state:"ready"|"loading"|"result"|"error")=>void,
