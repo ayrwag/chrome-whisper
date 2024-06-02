@@ -244,14 +244,6 @@ const ReadyPage = () => {
             </div>
           </>
         )}
-        {allowUploadsFromURL ?<button className="mb-6 text-sm underline text-[#147f14]" onClick={async () => {
-            try {
-              const {tabId} = await chrome.storage.local.get("tabId")
-              chrome.tabs.sendMessage(tabId,"fetchAndUploadAudioFile")
-            } catch (error) {
-                console.error('Error fetching or uploading file:', error);
-            }
-        }}>Use audio file from this page</button>:null}
         <div className="relative w-full flex flex-col items-center">
           <Button
             className={"max-w-max"}
@@ -278,6 +270,14 @@ const ReadyPage = () => {
             ""
           )}
         </div>
+        {!allowUploadsFromURL ?<button className="mt-6 text-sm underline" onClick={async () => {
+            try {
+              const {tabId} = await chrome.storage.local.get("tabId")
+              chrome.tabs.sendMessage(tabId,"fetchAndUploadAudioFile")
+            } catch (error) {
+                console.error('Error fetching or uploading file:', error);
+            }
+        }}>(transcribe audio from this page)</button>:null}
         <HighlightSvg />
         <img
           className="absolute -z-20 opacity-50"

@@ -10,7 +10,8 @@ chrome.runtime.onInstalled.addListener(() => {
         uploadProgress: null,
         showTransition: false,
         errorMessage:null,
-        allowUploadsFromURL:false
+        allowUploadsFromURL:false,
+        showCancelTranscriptionBtn:false
     });
 });
 
@@ -53,7 +54,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.storage.local.set({ allowUploadsFromURL: request.allowUploadsFromURL }, () => {
             //console.log('Allow uploads from URL updated:', request.allowUploadsFromURL);
         });
-    } else if (request.type === 'fileComplete' | request.type === "fileChunk") {
+    } if (request.type === "uploadProgress") {
+        chrome.storage.local.set({ uploadProgress: request.uploadProgress }, () => {
+            //console.log('Upload progress updated:', request.uploadProgress);
+        });
+    }
+    if( request.type === "showCancelTranscriptionBtn") {
+        chrome.storage.local.set({ showCancelTranscriptionBtn: request.showCancelTranscriptionBtn }, () => {
+            //console.log('Show cancel transcription button updated:', request.showCancelTranscriptionBtn);
+        });
+    }
+    else if (request.type === 'fileComplete' | request.type === "fileChunk") {
 
         if (request.type === "fileChunk") {
             fileData.push(request.chunk);
@@ -69,14 +80,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     //console.log(progressEvent)
                     const progress = arrayBuffer.byteLength ? progressEvent.loaded / arrayBuffer.byteLength : null;
                     console.log(progress)
-                    chrome.runtime.sendMessage({type:"uploadProgress",uploadProgress:Math.round(100 * progress)/100?progress:null})           
+                    chrome.storage.local.set({uploadProgress:Math.round(100 * progress)/100?progress:null})           
                 }
             })
-            .then((res) => {
+        .then((res) => {
             if (res.data.text) {
                 chrome.storage.local.set({ result: res.data.text });
                 chrome.storage.local.set({ state: "result" });
-                chrome.runtime.sendMessage({type:"uploadProgress",uploadProgress:1})//hard-setting uploadProgress to 1
             } else {
                 throw new Error("No text returned")
             }
@@ -89,6 +99,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 else
                 chrome.storage.local.set({errorMessage:`${error.message}`})
             });
+            setTimeout(()=>{
+                chrome.storage.local.set({uploadProgress:1})//hard-setting uploadProgress to 1
+            },15000)
             chrome.storage.local.set({ state: "loading" });
             fileData = []; // Clear the buffer
             setTimeout(()=>{
